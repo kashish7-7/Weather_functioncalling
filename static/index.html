@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Weather – Function Calling Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .card {
+            background: #ffffff;
+            padding: 20px 24px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 340px;
+        }
+
+        h1 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        label {
+            font-size: 14px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            margin-bottom: 12px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            background: #2563eb;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .result {
+            margin-top: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .error {
+            color: #b91c1c;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Weather Checker</h1>
+        <form id="weather-form">
+            <label for="city">Enter city name:</label>
+            <input type="text" id="city" name="city" placeholder="e.g. Mumbai" required />
+            <button type="submit">Get Weather</button>
+        </form>
+
+        <div id="error" class="error"></div>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById("weather-form");
+        const resultDiv = document.getElementById("result");
+        const errorDiv = document.getElementById("error");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault(); // stop form from reloading page
+
+            const city = document.getElementById("city").value.trim();
+            if (!city) return;
+
+            resultDiv.innerHTML = "";
+            errorDiv.innerHTML = "Loading...";
+
+            try {
+                const response = await fetch("/weather", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ city: city })
+                });
+
+                const data = await response.json();
+                errorDiv.innerHTML = "";
+
+                if (data.cod && data.cod !== 200) {
+                    // OpenWeather error (e.g. city not found)
+                    errorDiv.textContent = data.message || "Something went wrong.";
+                    resultDiv.innerHTML = "";
+                    return;
+                }
+
+                const name = data.name;
+                const temp = data.main?.temp;
+                const humidity = data.main?.humidity;
+                const desc = data.weather && data.weather[0] ? data.weather[0].description : "N/A";
+
+                resultDiv.innerHTML = `
+                    <strong>City:</strong> ${name} <br/>
+                    <strong>Temperature:</strong> ${temp} °C<br/>
+                    <strong>Humidity:</strong> ${humidity}%<br/>
+                    <strong>Condition:</strong> ${desc}
+                `;
+            } catch (err) {
+                errorDiv.textContent = "Error connecting to server.";
+                resultDiv.innerHTML = "";
+            }
+        });
+    </script>
+</body>
+</html>
